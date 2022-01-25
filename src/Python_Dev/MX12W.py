@@ -1,4 +1,3 @@
-from asyncore import loop
 from tokenize import Double
 from xmlrpc.client import boolean
 from DynamixelSDK.python.tests.protocol1_0.read_write import TORQUE_DISABLE, TORQUE_ENABLE
