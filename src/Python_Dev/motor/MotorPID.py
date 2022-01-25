@@ -54,3 +54,21 @@ class MotorPID(Motor) :
         print("Vitesse 	    : ",self._Speed)
         print("*********************************")
         return True
+
+        """
+        Return Proportionnal factor
+        """
+        def getP(self) -> unsignedinteger:
+            return self._P
+
+        """
+        Return Intergral factor
+        """
+        def getI(self) -> unsignedinteger:
+            return self._I
+
+        """
+        Return Derivate factor
+        """
+        def getD(self) -> unsignedinteger:
+            return self._D

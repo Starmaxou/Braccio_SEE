@@ -38,8 +38,10 @@ ADDR_PRESENT_TEMPERATURE    = 43
 class Motor :
     _Protocol       = 1.0
     _Baudrate       = 1000000
+    _ID             = 0
+    _PortName       = "/dev/ttyACM0"
     _Error          = 0
-    
+
     _MinPos	        = 0
     _MaxPos	        = 1023
     _MaxSpeed       = 1023
@@ -329,51 +331,9 @@ class Motor :
         print("*********************************")
         return True
 
+    """
+    Properly close portHandler
+    """
     def closePort(self) :
         self._portHandler.closePort()
-
-    """
-    Return Proportionnal factor
-    """
-    def getP(self) -> unsignedinteger:
-        return self._P
-
-    """
-    Return Intergral factor
-    """
-    def getI(self) -> unsignedinteger:
-        return self._I
-
-    """
-    Return Derivate factor
-    """
-    def getD(self) -> unsignedinteger:
-        return self._D
-
-    """
-    Set proportionnal factor
-    """
-    def setP(self) -> bool:
-        ###########################################################
-        ####################### TO DO #############################
-        ###########################################################
-        pass
-        
-    """
-    Set integral factor
-    """
-    def setI(self) -> bool:
-        ###########################################################
-        ####################### TO DO #############################
-        ###########################################################
-        pass
-
-    """
-    Set derivate factor
-    """
-    def setD(self) -> bool:
-        ###########################################################
-        ####################### TO DO #############################
-        ###########################################################
-        pass
 
