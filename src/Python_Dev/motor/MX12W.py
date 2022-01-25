@@ -21,10 +21,10 @@ class MX12W(Motor) :
 
     _MinPos				= 0
     _MaxPos				= 4095
-    _Middle				= (_MinPos + _MaxPos) / 2
+    _MaxSpeed           = 300
     _Speed				= 300
     _TorqueEnable   	= TORQUE_ENABLE
-    _Led                = True
+    _Led                = LED_ON
 
     def __init__(self, ID) -> None:
         super().__init__(ID)
@@ -64,7 +64,6 @@ class MX12W(Motor) :
         #Get initial voltage, temperature and load
         if (self.getVoltage() == -1):
             return False
-
         if (self.getTemperature() == -1):
             return False
         if (self.getLoad() == -1):
@@ -73,8 +72,6 @@ class MX12W(Motor) :
         print("Motor n°"+ self._ID + " correctly started.")
         return True
         
-
-
     """
     Open the USB port
     @return True if correctly opened, else False
@@ -229,7 +226,7 @@ class MX12W(Motor) :
     Return true if correctly changed, else false
     """
     def ledOff(self) -> bool:
-        self._Led = False
+        self._Led = LED_OFF
         self._ComResult, self._Error = self._packetHandler.write1ByteTxRx(self._portHandler, self._ID, self._LedAddr, self._Led)
         return self.verifComm(self._packetHandler, self._ComResult, self._Error, "Led turned off successfully")
     
@@ -238,7 +235,7 @@ class MX12W(Motor) :
     Return true if correctly changed, else false
     """
     def ledOn(self) -> bool:
-        self._Led = True
+        self._Led = LED_ON
         self._ComResult, self._Error = self._packetHandler.write1ByteTxRx(self._portHandler, self._ID, self._LedAddr, self._Led)
         return self.verifComm(self._packetHandler, self._ComResult, self._Error, "Led turned on successfully")
     
