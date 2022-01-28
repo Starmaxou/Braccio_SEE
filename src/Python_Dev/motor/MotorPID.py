@@ -2,8 +2,25 @@ from Motor import *
 
 class MotorPID(Motor) :
  
-    def __init__(self, ID, portName, CST_BAUDRATE) -> None:
-        super().__init__(ID, portName, CST_BAUDRATE)
+    def __init__(self, motor_reference : string , ID : int, portName : string , CST_BAUDRATE : int) -> None:
+        #TODO : Finir les conditions d'instanciation + variables et attribut PID
+        if not(motor_reference in MOTORS_INFOS_DICT) :
+            print("ERROR    : Motor reference unknown. This class can only handle Dynamixel MX160T, MX64T, MX28T and AX18A")
+            print("INFO     : Instanciation aborted")
+            return
+        elif not(motor_reference in MOTORS_PID_INFOS_DICT) :
+            print("WARNING  : You are trying to instanciate a class not corresponding to your motor, use Motor class instead")
+            print("INFO     : Instanciation aborted")
+            return
+        else :
+            self._ID        = ID
+            self._PortName  = portName #"/dev/ttyACM0"
+            self._Baudrate  = CST_BAUDRATE
+            
+            self._MaxPos    = MOTORS_INFOS_DICT[motor_reference][0]
+            self._MaxSpeed  = MOTORS_INFOS_DICT[motor_reference][1]
+           
+            self.start()
         
     """
     Set proportionnal factor
@@ -43,6 +60,7 @@ class MotorPID(Motor) :
 
         print("*********************************")
         print("Position 	: ", self._PresentPos)
+        print("Vitesse 	    : ", self._PresentSpeed)
         print("Température	: ", self._Temperature)
         print("Charge 		: ", self._Load)
         print("Voltage 	    : ", self._Voltage)
@@ -51,24 +69,23 @@ class MotorPID(Motor) :
         print("Gain D 		: ", self._D)
         if self._TorqueEnable : print("Couple 		: Activé") 
         else : print("Couple 		: Désactivé") 
-        print("Vitesse 	    : ",self._Speed)
         print("*********************************")
         return True
 
         """
         Return Proportionnal factor
         """
-        def getP(self) -> unsignedinteger:
+        def getP(self) -> int:
             return self._P
 
         """
         Return Intergral factor
         """
-        def getI(self) -> unsignedinteger:
+        def getI(self) -> int:
             return self._I
 
         """
         Return Derivate factor
         """
-        def getD(self) -> unsignedinteger:
+        def getD(self) -> int:
             return self._D

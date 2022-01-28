@@ -1,64 +1,46 @@
-from numpy import unsignedinteger
+from markupsafe import string
+from numpy import int
 from DynamixelSDK.python.src import dynamixel_sdk as dxlSdk
 from types import *
-import myFunctions
 import getch
 from tokenize import Double
 
-###########################################################################
-############################# Global Variable #############################
-###########################################################################
-#--------------------------------------
-#--------------- States ---------------
-#--------------------------------------
-TORQUE_ENABLE   = 1
-TORQUE_DISABLE  = 0
-LED_ON          = 1
-LED_OFF         = 0
-
-BAUDRATE        = 1000000
-
-#--------------------------------------
-#-------------- Address ---------------
-#--------------------------------------
-ADDR_TORQUE_ENABLE  = 24
-ADDR_LED            = 25
-ADDR_D_FACTOR       = 26
-ADDR_I_FACTOR       = 27
-ADDR_P_FACTOR       = 28
-ADDR_GOAL_POS       = 30
-ADDR_PRESENT_SPEED  = 32
-ADDR_PRESENT_POS    = 36
-ADDR_PRESENT_LOAD   = 40
-ADDR_PRESENT_VOLTAGE        = 42
-ADDR_PRESENT_TEMPERATURE    = 43
-###########################################################################
-###########################################################################
+import myFunctions
+from myConstants import *
 
 class Motor :
-    _Protocol       = 1.0
-    _Baudrate       = 1000000
-    _ID             = 0
-    _PortName       = "/dev/ttyACM0"
+
+    #Init values   
     _Error          = 0
 
-    _MinPos	        = 0
-    _MaxPos	        = 1023
-    _MaxSpeed       = 1023
-
+    _MinPos         = MIN_POS
+    _MinSpeed       = MIN_SPEED
     _GoalPos        = 0
-    _Speed	        = 300           
+    _GoalSpeed      = 300           
     _TorqueEnable   = TORQUE_ENABLE
     _Led            = LED_OFF
     
     _Threshold      = 8
         
-    def __init__(self, ID, portName, CST_BAUDRATE) -> None:
-        self._ID        = ID
-        self._PortName  = portName #"/dev/ttyACM0"
-        self._Baudrate  = CST_BAUDRATE
+    def __init__(self, motor_reference : string , ID : int, portName : string , CST_BAUDRATE : int) -> None:
+        if not(motor_reference in MOTORS_INFOS_DICT) :
+            print("ERROR    : Motor reference unknown. This class can only handle Dynamixel MX160T, MX64T, MX28T and AX18A")
+            print("INFO     : Instanciation aborted")
+            return
+        elif motor_reference in MOTORS_PID_INFOS_DICT :
+            print("WARNING  : You are trying to instanciate a class not corresponding to your motor, use Motor PID class instead")
+            print("INFO     : Instanciation aborted")
+            return
+        else :
+            self._ID        = ID
+            self._PortName  = portName #"/dev/ttyACM0"
+            self._Baudrate  = CST_BAUDRATE
+            
+            self._MaxPos    = MOTORS_INFOS_DICT[motor_reference][0]
+            self._MaxSpeed  = MOTORS_INFOS_DICT[motor_reference][1]
+           
+            self.start()
         
-        self.start()
         
     """
     Starting motor routine
@@ -76,7 +58,7 @@ class Motor :
         Sets the protocol version
         Gets methods and members of Protocol1PacketHandler or Protocol2PacketHandler
         """
-        self._packetHandler = dxlSdk.PacketHandler(self._Protocol)
+        self._packetHandler = dxlSdk.PacketHandler(PROTOCOL)
 
         #Open port
         if(not(self.openPort())):
@@ -153,15 +135,24 @@ class Motor :
         self._ComResult, self._Error = self._packetHandler.write1ByteTxRx(self._portHandler, self._ID, ADDR_TORQUE_ENABLE, self._TorqueEnable)
         
         return self.verifComm(self._packetHandler, self._ComResult, self._Error, "Torque enabled successfully")
-    
+   
     """
-    Modify the velocity
-    @param speed New velocity
+    Modify the goal position
     @return True if correctly modified, else False
     """
-    def setSpeed(self, targetSpeed) -> bool :
-        self._Speed = targetSpeed if (targetSpeed < self._MaxSpeed) else self._MaxSpeed
-        self._ComResult, self._Error = self._packetHandler.write2ByteTxRx(self._portHandler, self._ID, ADDR_PRESENT_SPEED, self._Speed)
+    def setGoalPosition(self) -> bool :
+        self._GoalPos = self._GoalPos if (self._GoalPos < self._MaxPos) else self._MaxPos
+        self._ComResult, self._Error = self._packetHandler.write2ByteTxRx(self._portHandler, self._ID, ADDR_GOAL_POS, self._GoalPos)
+        
+        return self.verifComm(self._packetHandler, self._ComResult, self._Error, "Goal Position modified successfully")
+        
+    """
+    Modify the velocity
+    @return True if correctly modified, else False
+    """
+    def setSpeed(self) -> bool :
+        self._Speed = self._Speed if (self._Speed < self._MaxSpeed) else self._MaxSpeed
+        self._ComResult, self._Error = self._packetHandler.write2ByteTxRx(self._portHandler, self._ID, ADDR_GOAL_SPEED, self._Speed)
         
         return self.verifComm(self._packetHandler, self._ComResult, self._Error, "Velocity modified successfully")
         
@@ -213,11 +204,23 @@ class Motor :
     Recover the motor position
     @return motor position, -1 if communication didn't worked
     """
-    def getPosition(self) -> unsignedinteger:
+    def getPosition(self) -> int:
         self._PresentPos, self._ComResult, self._Error  = self._packetHandler.read2ByteTxRx(self._portHandler, self._ID, ADDR_PRESENT_POS)
         
-        if self.verifComm(self._packetHandler, self._ComResult, self._Error, "Load recovered successfully") : 
+        if self.verifComm(self._packetHandler, self._ComResult, self._Error, "Position recovered successfully") : 
             return self._PresentPos
+        else :
+            return -1
+    
+    """
+    Recover the motor speed
+    @return motor speed, -1 if communication didn't worked
+    """
+    def getSpeed(self) -> int:
+        self._PresentSpeed, self._ComResult, self._Error  = self._packetHandler.read2ByteTxRx(self._portHandler, self._ID, ADDR_PRESENT_SPEED)
+        
+        if self.verifComm(self._packetHandler, self._ComResult, self._Error, "Speed recovered successfully") : 
+            return self._PresentSpeed
         else :
             return -1
     
@@ -228,16 +231,27 @@ class Motor :
     @param isBlocking Should the movment be blocking ? (False by default)
     @returns true if moved correctly, else false
     """
-    def move(self, newPos : unsignedinteger, isDegree : bool, isBlocking : bool, debug : bool) -> bool :
+    def move(self, newPos : int, time_to_move : int, time_to_accelerate : int, isDegree : bool, isBlocking : bool, debug : bool) -> bool :
+        #Convert degree in relative postiion
         if isDegree :
-            self._GoalPos = myFunctions.mapping(newPos, 0, 360, self._MinPos, self._MaxPos)
+            if self._MaxPos == MAX_POS_NPID :
+                self._GoalPos = myFunctions.mapping(newPos, 0, 300, self._MinPos, self._MaxPos)
+            else : 
+                self._GoalPos = myFunctions.mapping(newPos, 0, 360, self._MinPos, self._MaxPos)
         else :
             self._GoalPos = newPos % self._MaxPos
-            
-        #Write goal position
-        self._ComResult, self._Error = self._packetHandler.write2ByteTxRx(self._portHandler, self._ID, ADDR_GOAL_POS, self._GoalPos)
-        self.verifComm(self._packetHandler, self._ComResult, self._Error, "")
+
+        #Calculate speed
+        self.getPosition()
+        self._Speed = round(abs(self._PresentPos - self._GoalPos) / time_to_move)
         
+        #Write speed position
+        self.setSpeed()
+        
+        #Write goal position
+        self.setGoalPosition()
+        
+        """
         if isBlocking :
             while True :
                 self._PresentPos, self._ComResult, self._Error  = self._packetHandler.read2ByteTxRx(self._portHandler, self._ID, ADDR_PRESENT_POS)
@@ -251,6 +265,7 @@ class Motor :
                 dif = self._GoalPos - self._PresentPos
                 
                 if abs(dif) <= self._Threshold : break
+        """
         
         return True        
 
@@ -275,19 +290,13 @@ class Motor :
     """
     Return current motor baudrate   
     """
-    def getBaudrate(self) -> unsignedinteger:      
+    def getBaudrate(self) -> int:      
         return self._Baudrate
  
     """
-    Return current motor speed
-    """
-    def getSpeed(self) -> unsignedinteger:
-        return self._Speed
-    
-    """
     Return motor maximum speed
     """
-    def getMaxSpeed(self) -> unsignedinteger:
+    def getMaxSpeed(self) -> int:
         return self._MaxSpeed
     
     """
@@ -319,15 +328,17 @@ class Motor :
         if (self.getVoltage() == -1) : return False
         if (self.getTemperature() == -1) : return False
         if (self.getLoad() == -1) : return False
+        if (self.getSpeed() == -1) : return False
+        if (self.getPosition() == -1) : return False
 
         print("*********************************")
         print("Position 	: ", self._PresentPos)
+        print("Vitesse 	    : ",self._PresentSpeed)
         print("Température	: ", self._Temperature)
         print("Charge 		: ", self._Load)
         print("Voltage 	    : ", self._Voltage)
         if self._TorqueEnable : print("Couple 		: Activé") 
         else : print("Couple 		: Désactivé") 
-        print("Vitesse 	    : ",self._Speed)
         print("*********************************")
         return True
 
