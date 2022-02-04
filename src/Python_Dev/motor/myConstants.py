@@ -52,3 +52,6 @@ ADDR_PRESENT_LOAD   = 40
 ADDR_PRESENT_VOLTAGE        = 42
 ADDR_PRESENT_TEMPERATURE    = 43
 
+#------------- Board ports ----------------
+
+MOTOR_PORT = 0
