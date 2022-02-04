@@ -3,7 +3,7 @@ from Motor import *
 class MotorPID(Motor) :
  
     def __init__(self, motor_reference : string , ID : int, portName : string , CST_BAUDRATE : int) -> None:
-        #TODO : Finir les conditions d'instanciation + variables et attribut PID
+        
         if not(motor_reference in MOTORS_INFOS_DICT) :
             print("ERROR    : Motor reference unknown. This class can only handle Dynamixel MX160T, MX64T, MX28T and AX18A")
             print("INFO     : Instanciation aborted")

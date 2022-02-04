@@ -38,7 +38,7 @@ class Motor :
             
             self._MaxPos    = MOTORS_INFOS_DICT[motor_reference][0]
             self._MaxSpeed  = MOTORS_INFOS_DICT[motor_reference][1]
-           
+            print("Constr OK")
             self.start()
         
         
@@ -52,6 +52,7 @@ class Motor :
         Gets methods and members of PortHandlerLinux or PortHandlerWindows
         """
         self._portHandler = dxlSdk.PortHandler(self._PortName)
+        print("portHadler OK")
 
         """
         Initializes PacketHandler instance
@@ -59,29 +60,41 @@ class Motor :
         Gets methods and members of Protocol1PacketHandler or Protocol2PacketHandler
         """
         self._packetHandler = dxlSdk.PacketHandler(PROTOCOL)
+        print("packetHandler OK")
 
         #Open port
         if(not(self.openPort())):
+            print("openPort NOK")
+
             return False
+
         
         #Set port baudrate
         if(not(self.setBaudrate(self._Baudrate))):
+            print("setBaudrate NOK")
+
             return False
         
         #Enable torque
         if (not(self.enableTorque())):
+            print("enable Toprque NOK")
+
             return False
 
         #Set speed
         if (not(self.setSpeed(self._Speed))):
+            print("setSpeed NOK")
             return False
         
         #Get initial voltage, temperature and load
         if (self.getVoltage() == -1):
+            print("voltage NOK")
             return False
         if (self.getTemperature() == -1):
+            print("temp NOK")
             return False
         if (self.getLoad() == -1):
+            print("load NOK")
             return False
         
         print("Motor n°"+ self._ID + " correctly started.")
@@ -231,7 +244,7 @@ class Motor :
     @param isBlocking Should the movment be blocking ? (False by default)
     @returns true if moved correctly, else false
     """
-    def move(self, newPos : int, time_to_move : int, time_to_accelerate : int, isDegree : bool, isBlocking : bool, debug : bool) -> bool :
+    def move(self, newPos : int, time_to_move : int, time_to_accelerate = 0, isDegree = False, isBlocking = False, debug = False) -> bool :
         #Convert degree in relative postiion
         if isDegree :
             if self._MaxPos == MAX_POS_NPID :
@@ -246,10 +259,11 @@ class Motor :
         self._Speed = round(abs(self._PresentPos - self._GoalPos) / time_to_move)
         
         #Write speed position
-        self.setSpeed()
-        
+        if (self.setSpeed() == -1): 
+            return False         
         #Write goal position
-        self.setGoalPosition()
+        if (self.setGoalPosition() == -1):
+            return False
         
         """
         if isBlocking :

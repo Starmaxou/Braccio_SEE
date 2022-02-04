@@ -25,8 +25,6 @@ MAX_SPEED_64T   = 552   #relative speed ~ 63 rev/min, each unit equals 0.114 rpm
 MAX_SPEED_28T   = 482   #relative speed ~ 55 rev/min, each unit equals 0.114 rpm  
 MAX_SPEED_AX18A = 870   #relative speed ~ 97 rev/min, each unit equals 0.111 rpm
 
-
-# TODO : Finir de définir ces deux dictionnaire pour utilisation dans condition d'instanciation
 MOTORS_PID_INFOS_DICT   = {"MX106T": [MAX_POS_PID ,MAX_SPEED_106T] ,"MX64T": [MAX_POS_PID ,MAX_SPEED_64T],"MX28T": [MAX_POS_PID ,MAX_SPEED_28T]}
 MOTORS_INFOS_DICT       = {"AX18A": [MAX_POS_NPID, MAX_SPEED_AX18A]}  
 MOTORS_INFOS_DICT.update(MOTORS_PID_INFOS_DICT)
