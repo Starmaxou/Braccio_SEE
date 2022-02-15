@@ -20,6 +20,10 @@ class MotorPID(Motor) :
             self._MaxPos    = MOTORS_INFOS_DICT[motor_reference][0]
             self._MaxSpeed  = MOTORS_INFOS_DICT[motor_reference][1]
            
+            self._P =   0
+            self._I =   0
+            self._D =   0
+            
             self.start()
         
     """
@@ -57,19 +61,21 @@ class MotorPID(Motor) :
         if (self.getVoltage() == -1) : return False
         if (self.getTemperature() == -1) : return False
         if (self.getLoad() == -1) : return False
+        if (self.getPosition() == -1) : return False
+        if (self.getSpeed() == -1) : return False
 
-        print("*********************************")
+        print("********************MOTOR N°"+str(self._ID)+"********************")
         print("Position 	: ", self._PresentPos)
-        print("Vitesse 	    : ", self._PresentSpeed)
+        print("Vitesse         : ", self._PresentSpeed)
         print("Température	: ", self._Temperature)
         print("Charge 		: ", self._Load)
-        print("Voltage 	    : ", self._Voltage)
+        print("Voltage         : ", self._Voltage)
         print("Gain P 		: ", self._P)
         print("Gain I 		: ", self._I)
         print("Gain D 		: ", self._D)
-        if self._TorqueEnable : print("Couple 		: Activé") 
-        else : print("Couple 		: Désactivé") 
-        print("*********************************")
+        if self._TorqueEnable : print("Couple 		:  Activé") 
+        else : print("Couple 		:  Désactivé") 
+        print("*******************************************")
         return True
 
         """
