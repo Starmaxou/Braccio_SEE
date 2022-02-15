@@ -1,12 +1,16 @@
+from cgi import test
+from tracemalloc import start
 from markupsafe import string
 from numpy import int
 from DynamixelSDK.python.src import dynamixel_sdk as dxlSdk
 from types import *
 import getch
 from tokenize import Double
+import time
 
 import myFunctions
 from myConstants import *
+
 
 class Motor :
 
@@ -63,41 +67,25 @@ class Motor :
         print("packetHandler OK")
 
         #Open port
-        if(not(self.openPort())):
-            print("openPort NOK")
-
-            return False
-
-        
+        self.openPort()
+                
         #Set port baudrate
-        if(not(self.setBaudrate(self._Baudrate))):
-            print("setBaudrate NOK")
+        self.setBaudrate(self._Baudrate)
 
-            return False
-        
         #Enable torque
-        if (not(self.enableTorque())):
-            print("enable Toprque NOK")
+        self.enableTorque()
 
-            return False
-
+        
         #Set speed
-        if (not(self.setSpeed(self._Speed))):
-            print("setSpeed NOK")
-            return False
+        self.setSpeed()        
         
         #Get initial voltage, temperature and load
-        if (self.getVoltage() == -1):
-            print("voltage NOK")
-            return False
-        if (self.getTemperature() == -1):
-            print("temp NOK")
-            return False
-        if (self.getLoad() == -1):
-            print("load NOK")
-            return False
+        self.getVoltage() 
+        self.getTemperature()
+        self.getLoad() 
         
-        print("Motor n°"+ self._ID + " correctly started.")
+        self.showInfo()
+        print("Motor n°"+ str(self._ID) + " correctly started.")
         return True
     
     """
@@ -164,8 +152,8 @@ class Motor :
     @return True if correctly modified, else False
     """
     def setSpeed(self) -> bool :
-        self._Speed = self._Speed if (self._Speed < self._MaxSpeed) else self._MaxSpeed
-        self._ComResult, self._Error = self._packetHandler.write2ByteTxRx(self._portHandler, self._ID, ADDR_GOAL_SPEED, self._Speed)
+        self._GoalSpeed = self._GoalSpeed if (self._GoalSpeed < self._MaxSpeed) else self._MaxSpeed
+        self._ComResult, self._Error = self._packetHandler.write2ByteTxRx(self._portHandler, self._ID, ADDR_GOAL_SPEED, self._GoalSpeed)
         
         return self.verifComm(self._packetHandler, self._ComResult, self._Error, "Velocity modified successfully")
         
@@ -176,7 +164,7 @@ class Motor :
     def getVoltage(self) -> Double:
         Voltage, self._ComResult, self._Error  = self._packetHandler.read1ByteTxRx(self._portHandler, self._ID, ADDR_PRESENT_VOLTAGE)
         
-        if self.verifComm(self._packetHandler, self._ComResult, self._Error, "Voltage recovered successfully") : 
+        if True : #self.verifComm(self._packetHandler, self._ComResult, self._Error, "Voltage recovered successfully") : 
             self._Voltage = Voltage / 10
             return self._Voltage
         else :
@@ -201,7 +189,7 @@ class Motor :
     def getLoad(self) -> Double:
         Load, self._ComResult, self._Error  = self._packetHandler.read2ByteTxRx(self._portHandler, self._ID, ADDR_PRESENT_LOAD)
         
-        if self.verifComm(self._packetHandler, self._ComResult, self._Error, "Load recovered successfully") : 
+        if True : #self.verifComm(self._packetHandler, self._ComResult, self._Error, "Load recovered successfully") : 
             if (Load > 2047) : Load = 2047
             if (Load < 1024) : 
                 print("The motor is loaded counter clock wise")
@@ -244,8 +232,8 @@ class Motor :
     @param isBlocking Should the movment be blocking ? (False by default)
     @returns true if moved correctly, else false
     """
-    def move(self, newPos : int, time_to_move : int, time_to_accelerate = 0, isDegree = False, isBlocking = False, debug = False) -> bool :
-        #Convert degree in relative postiion
+    def move(self, newPos : int, timeToReach : int, timeToAccelerate = 0, isDegree = False, isBlocking = False, debug = False) -> bool :
+        #------Convert degree in relative postiion------
         if isDegree :
             if self._MaxPos == MAX_POS_NPID :
                 self._GoalPos = myFunctions.mapping(newPos, 0, 300, self._MinPos, self._MaxPos)
@@ -254,9 +242,54 @@ class Motor :
         else :
             self._GoalPos = newPos % self._MaxPos
 
+        """
+        #----------Acceleration----------
+        tta = 2                                                                     #timeToAccelerate : 2s
+        self.getPosition()
+        speedToReach = round(abs(self._PresentPos - self._GoalPos) / (timeToReach-2*tta))   #Constant speed to reach 
+        nbPas = 10                                                                  #Number of steps when accelerating
+        pas = round(speedToReach / nbPas)                                           #Step value to add when accelerating
+        
+        #Set initial speed
+        self._Speed = MIN_SPEED
+        
+        #Write speed position
+        if (self.setSpeed() == -1): 
+            return False 
+        
+        #Write goal position
+        if (self.setGoalPosition() == -1):
+            return False
+        else :
+            start_time = time.time()
+        
+        i = 1
+        while(i < nbPas + 1):
+            if ((time.time()-start_time) >= (i * pas)):
+                self._Speed += pas
+                if (self.setSpeed() == -1): 
+                    print("ERROR : Failing to accelerate")
+                    return False 
+                i += 1
+
+        #----------Croisiere----------
+        while((time.time()- start_time) <= (timeToReach - tta)):
+            pass
+        
+        i = 1
+        while(i < nbPas + 1):
+            if ( ( time.time()- start_time ) >= ( (i * pas) + timeToReach - tta ) ):
+                self._Speed -= pas
+                if (self.setSpeed() == -1): 
+                    print("ERROR : Failing to accelerate")
+                    return False 
+                i -= 1
+        
+        """
+        # Working : constant speed
         #Calculate speed
         self.getPosition()
-        self._Speed = round(abs(self._PresentPos - self._GoalPos) / time_to_move)
+        self._GoalSpeed = round(abs(self._PresentPos - self._GoalPos) / timeToReach)
         
         #Write speed position
         if (self.setSpeed() == -1): 
@@ -264,6 +297,7 @@ class Motor :
         #Write goal position
         if (self.setGoalPosition() == -1):
             return False
+        
         
         """
         if isBlocking :
@@ -339,15 +373,22 @@ class Motor :
     Return true if correctly changed, else false
     """
     def showInfo(self) -> bool:
+        self.getVoltage()
+        self.getTemperature()
+        self.getLoad()
+        self.getSpeed()
+        self.getPosition()
+        
+        """
         if (self.getVoltage() == -1) : return False
         if (self.getTemperature() == -1) : return False
         if (self.getLoad() == -1) : return False
         if (self.getSpeed() == -1) : return False
         if (self.getPosition() == -1) : return False
-
+        """
         print("*********************************")
         print("Position 	: ", self._PresentPos)
-        print("Vitesse 	    : ",self._PresentSpeed)
+        print("Vitesse 	    : ", self._PresentSpeed)
         print("Température	: ", self._Temperature)
         print("Charge 		: ", self._Load)
         print("Voltage 	    : ", self._Voltage)
