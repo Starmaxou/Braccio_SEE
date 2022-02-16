@@ -1,5 +1,3 @@
-from cgi import test
-from tracemalloc import start
 from markupsafe import string
 from numpy import int
 from DynamixelSDK.python.src import dynamixel_sdk as dxlSdk
@@ -234,7 +232,7 @@ class Motor :
     @param isBlocking Should the movment be blocking ? (False by default)
     @returns true if moved correctly, else false
     """
-    def move(self, newPos : int, timeToReach : int, timeToAccelerate = 0, isDegree = False, isBlocking = False, debug = False) -> bool :
+    def move(self, newPos : int, TTR : int, TTA = 0, isDegree = False, isBlocking = False, debug = False) -> bool :
         #------Convert degree in relative postiion------
         if isDegree :
             if self._MaxPos == MAX_POS_NPID :
@@ -244,6 +242,9 @@ class Motor :
         else :
             self._GoalPos = newPos % self._MaxPos
 
+        print("DELTA POS : ", self._GoalPos, ", TTA : ", TTA, ", TTR :", TTR)
+        
+        """
         # Working : constant speed
         #Calculate speed
         self.getPosition()
@@ -253,13 +254,69 @@ class Motor :
         self.setSpeed()
         self.setGoalPosition() 
         """
-        if (self.setSpeed() == -1): 
-            return False         
-        #Write goal position
-        if (self.setGoalPosition() == -1):
-            return False
-        """
+        if TTA > 0 :
+            V2 = round(abs(self._GoalPos - self._PresentPos) / (TTR-TTA))   #Constant speed to reach 
+            
+            nbStep      = 10                                    #Number of steps when accelerating
+            stepSpeed   = round(V2 / nbStep)                    #Speed step value 
+            stepTime    = TTA / nbStep                          #Time step value
+
+            print("V2 : ", V2,", STEP TIME : ", stepTime, ", STEP SPEED : ", stepSpeed)
+
+            ##Set initial speed
+            self._GoalSpeed = MIN_SPEED
+            
+            ##Write speed position
+            self.setSpeed() 
+
+            ##Write goal position
+            self.setGoalPosition() 
+
+
+            #----------Acceleration----------
+            start_time = time.time()
+
+            i = 1
+            while(i < nbStep + 1):
+                actualTime = time.time() - start_time
+                
+                if (actualTime >= (i * stepTime)):
+                    print("ActualTime : ", actualTime)
+                    print("ActualTime : ", actualTime)
+
+
+                    self._GoalSpeed += stepSpeed
+                    print("GoalSpeed : ", self._GoalSpeed)
+                    i+=1
+                    self.setSpeed()
+                    
+
+            #----------Croisiere----------
+            while((time.time()- start_time) <= (TTR - TTA)):
+                pass
+
+            #----------Decceleration----------
+            i = 1
+            while(i < nbStep + 1):
+                actualTime = time.time() - start_time
+                
+                if (actualTime >= ((i * stepTime)+TTR-TTA)):
+                    print("ActualTime : ", actualTime)
+
+                    self._GoalSpeed -= stepSpeed
+                    print("GoalSpeed : ", self._GoalSpeed)
+                    i+=1
+                    self.setSpeed()
         
+        else :
+            # Working : constant speed
+            #Calculate speed
+            self.getPosition()
+            self._GoalSpeed = round(abs(self._PresentPos - self._GoalPos) / TTR)
+            
+            #Write speed position
+            self.setSpeed()
+            self.setGoalPosition() 
         """
         if isBlocking :
             while True :

@@ -40,19 +40,28 @@ while (1) :
     print("Quel servo controler ?")
     nbServo = int(input())
     if nbServo == 10 :
-        servo_elbow.showInfo()
+        servo_base.showInfo()
     else :
         if nbServo < 0 or nbServo > 5 :
             pass
         else:
             print("Quelle position donner ? (en °) ")
-            servo_elbow.showInfo()
 
             pos = int(input())
+            
+            print("Quel TTR ?")
+            TTR = int(input())
+            print("TTR : ", TTR)
+
+            print("Quel TTA ?")
+            TTA = int(input())
+            print("TTA : ", TTA)
+
+            
             if pos < 0 or pos > 360 :
                 pass
             else:
-                tabServo[nbServo].move(pos, 40, isDegree=True)
+                tabServo[nbServo].move(pos, TTR = TTR, TTA = TTA, isDegree=True)
 
         
 
