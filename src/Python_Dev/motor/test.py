@@ -1,13 +1,15 @@
 import time
+import myFunctions
 
 ############ Servos ###########
 PresentPos = 0
 ############ VAR ##############
 TTR     = 10
 TTA     = 1
-GoalPos = 2000
+InPos = 355
 ###############################
 
+GoalPos = myFunctions.mapping(InPos, 0, 360, 0, 4092)
 
 V2 = round(abs(GoalPos - PresentPos) / (TTR-TTA))   #Constant speed to reach 
 
@@ -15,7 +17,11 @@ nbStep      = 10                                    #Number of steps when accele
 stepSpeed   = round(V2 / nbStep)                    #Speed step value 
 stepTime    = TTA / nbStep                   #Time step value
 
+print("**********************************************")
+print("DELTA POS : ",GoalPos, ", TTA : ", TTA, ", TTR :", TTR)
 print("V2 : ", V2,", STEP TIME : ", stepTime, ", STEP SPEED : ", stepSpeed)
+print("**********************************************")
+
 
 ##Set initial speed
 #self._GoalSpeed = MIN_SPEED
@@ -29,19 +35,33 @@ GoalSpeed = 0
 
 
 #----------Acceleration----------
-start_time = time.time()
+print("--------------------------------\n",
+        "----------Acceleration----------\n",
+        "--------------------------------")
 
+start_time = time.time()
+actualTime = start_time
+
+i = 1
+print("~~~~~~~~~~Step n°", i, "~~~~~~~~~~" )
+print("\tActualTime : ", actualTime)
+print("\tGoalSpeed : ", GoalSpeed, "\n")
+            
 i = 1
 while(i < nbStep + 1):
     actualTime = time.time() - start_time
     
     if (actualTime >= (i * stepTime)):
-        print("ActualTime : ", actualTime)
+        print("~~~~~~~~~~Step n°", i, "~~~~~~~~~~" )
+        print("\tActualTime : ", actualTime)
+        print("\tGoalSpeed : ", GoalSpeed, "\n")
 
         GoalSpeed += stepSpeed
-        print("GoalSpeed : ", GoalSpeed)
+       
         i+=1
-        print("NEXT STEP : ", i * stepTime)
+        print("~~~~~~~~~~Step n°", i, "~~~~~~~~~~" )
+        print("\tActualTime : ", actualTime)
+        print("\tGoalSpeed : ", GoalSpeed, "\n")
         #self.setSpeed()
         
 
@@ -55,10 +75,10 @@ while(i < nbStep + 1):
     actualTime = time.time() - start_time
     
     if (actualTime >= ((i * stepTime)+TTR-TTA)):
-        print("ActualTime : ", actualTime)
 
         GoalSpeed -= stepSpeed
-        print("GoalSpeed : ", GoalSpeed)
         i+=1
-        print("NEXT STEP : ", i * stepTime)
+        print("~~~~~~~~~~Step n°", i, "~~~~~~~~~~" )
+        print("\tActualTime : ", actualTime)
+        print("\tGoalSpeed : ", GoalSpeed)
         #self.setSpeed()

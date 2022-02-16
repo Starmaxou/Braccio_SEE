@@ -1,3 +1,4 @@
+from locale import T_FMT_AMPM
 from wsgiref.simple_server import server_version
 from myConstants import *
 from Motor import *
@@ -52,17 +53,20 @@ while (1) :
             print("Quel TTR ?")
             TTR = int(input())
             print("TTR : ", TTR)
-
+            
             print("Quel TTA ?")
             TTA = int(input())
             print("TTA : ", TTA)
 
+            #tabServo[nbServo].setP(0)
+            #tabServo[nbServo].setI(0)
+            #tabServo[nbServo].setD(0)
             
             if pos < 0 or pos > 360 :
                 pass
             else:
-                tabServo[nbServo].move(pos, TTR = TTR, TTA = TTA, isDegree=True)
-
+                tabServo[nbServo].move(pos, TTR = TTR, TTA=TTA, isDegree=True)
+                tabServo[nbServo].getPosition()
         
 
 #servo_base.move(rand.randint(0,360), 10*rand.randint(1,20)/2,isDegree=True)
