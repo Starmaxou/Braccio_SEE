@@ -26,7 +26,7 @@ dispatcher.map("/Move/WristRot",Call.move_wrist_rot,"targetAngle", "timeToReach"
 dispatcher.map("/Move/Gripper",Call.move_gripper,"targetAngle", "timeToReach", "accelTime")
 
 server = osc_server.ThreadingOSCUDPServer((args.ip, args.port), dispatcher)
-client = udp_client.SimpleUDPClient(args.ip, args.port)
+#client = udp_client.SimpleUDPClient(args.ip, args.port)
 
 print("Serving on {}".format(server.server_address))
 

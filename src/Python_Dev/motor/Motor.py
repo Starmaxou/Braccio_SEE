@@ -1,13 +1,13 @@
 from markupsafe import string
 from numpy import int
-from DynamixelSDK.python.src import dynamixel_sdk as dxlSdk
+from motor.DynamixelSDK.python.src import dynamixel_sdk as dxlSdk
 from types import *
 import getch
 from tokenize import Double
 import time
 
-import myFunctions
-from myConstants import *
+import motor.myFunctions
+from motor.myConstants import *
 
 
 class Motor :

@@ -1,4 +1,4 @@
-from Motor import *
+from motor.Motor import *
 
 class MotorPID(Motor) :
  
