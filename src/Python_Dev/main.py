@@ -27,43 +27,43 @@ class OscCallbacks :
     def move_base(self, str, args, *stArgs):
         _targetAngle = args
         _timeToReach = stArgs[0]
-        print("MoveBase -> targetAngle :", _targetAngle, " timeToReach :", _timeToReach, "accelTime", _accelTime)
+        print("MoveBase -> targetAngle :", _targetAngle, " timeToReach :", _timeToReach)
         Base.move(_targetAngle, _timeToReach, True)
 
     def move_shoulder(self, str, args, *stArgs):
         _targetAngle = args
         _timeToReach = stArgs[0]
         _accelTime = stArgs[1]
-        print("MoveShoulder -> targetAngle :", _targetAngle, " timeToReach :", _timeToReach, "accelTime", _accelTime)
-        Shoulder.move(_targetAngle, _timeToReach, _accelTime, True, False, False)
+        print("MoveShoulder -> targetAngle :", _targetAngle, " timeToReach :", _timeToReach)
+        Shoulder.move(_targetAngle, _timeToReach, True)
 
     def move_elbow(self, str, args, *stArgs):
         _targetAngle = args
         _timeToReach = stArgs[0]
         _accelTime = stArgs[1]
-        print("MoveElbow -> targetAngle :", _targetAngle, " timeToReach :", _timeToReach, "accelTime", _accelTime)
-        Elbow.move(_targetAngle, _timeToReach, _accelTime, True, False, False)
+        print("MoveElbow -> targetAngle :", _targetAngle, " timeToReach :", _timeToReach)
+        Elbow.move(_targetAngle, _timeToReach, True)
         
     def move_wrist_ver(self, str, args, *stArgs):
         _targetAngle = args
         _timeToReach = stArgs[0]
         _accelTime = stArgs[1]
-        print("MoveWristVer -> targetAngle :", _targetAngle, " timeToReach :", _timeToReach, "accelTime", _accelTime)
-        WristVer.move(_targetAngle, _timeToReach, _accelTime, True, False, False)
+        print("MoveWristVer -> targetAngle :", _targetAngle, " timeToReach :", _timeToReach)
+        WristVer.move(_targetAngle, _timeToReach, True)
 
     def move_wrist_rot(self, str, args, *stArgs):
         _targetAngle = args
         _timeToReach = stArgs[0]
         _accelTime = stArgs[1]
-        print("MoveWristRot -> targetAngle :", _targetAngle, " timeToReach :", _timeToReach, "accelTime", _accelTime)
-        WristRot.move(_targetAngle, _timeToReach, _accelTime, True, False, False)
+        print("MoveWristRot -> targetAngle :", _targetAngle, " timeToReach :", _timeToReach)
+        WristRot.move(_targetAngle, _timeToReach, True)
 
     def move_gripper(self, str, args, *stArgs):
         _targetAngle = args
         _timeToReach = stArgs[0]
         _accelTime = stArgs[1]
-        print("MoveGripper -> targetAngle :", _targetAngle, " timeToReach :", _timeToReach, "accelTime", _accelTime)
-        Gripper.move(_targetAngle, _timeToReach, _accelTime, True, False, False)
+        print("MoveGripper -> targetAngle :", _targetAngle, " timeToReach :", _timeToReach)
+        Gripper.move(_targetAngle, _timeToReach, True)
 
 
 Call = OscCallbacks
@@ -75,12 +75,12 @@ args = parser.parse_args()
 
 dispatcher = dispatcher.Dispatcher()
 dispatcher.map("/EggControl",Call.egg_control,"activation")
-dispatcher.map("/Move/Base",Call.move_base,"targetAngle", "timeToReach", "accelTime")
-dispatcher.map("/Move/Shoulder",Call.move_shoulder,"targetAngle", "timeToReach", "accelTime")
-dispatcher.map("/Move/Elbow",Call.move_elbow,"targetAngle", "timeToReach", "accelTime")
-dispatcher.map("/Move/WristVer",Call.move_wrist_ver,"targetAngle", "timeToReach", "accelTime")
-dispatcher.map("/Move/WristRot",Call.move_wrist_rot,"targetAngle", "timeToReach", "accelTime")
-dispatcher.map("/Move/Gripper",Call.move_gripper,"targetAngle", "timeToReach", "accelTime")
+dispatcher.map("/Move/Base",Call.move_base,"targetAngle", "timeToReach")
+dispatcher.map("/Move/Shoulder",Call.move_shoulder,"targetAngle", "timeToReach")
+dispatcher.map("/Move/Elbow",Call.move_elbow,"targetAngle", "timeToReach")
+dispatcher.map("/Move/WristVer",Call.move_wrist_ver,"targetAngle", "timeToReach")
+dispatcher.map("/Move/WristRot",Call.move_wrist_rot,"targetAngle", "timeToReach")
+dispatcher.map("/Move/Gripper",Call.move_gripper,"targetAngle", "timeToReach")
 
 server = osc_server.ThreadingOSCUDPServer((args.ip, args.port), dispatcher)
 #client = udp_client.SimpleUDPClient(args.ip, args.port)
