@@ -14,6 +14,7 @@ class Motor :
 
     #Init values   
     _Error          = 0
+    _Moving         = False
 
     _MinPos         = MIN_POS
     _MinSpeed       = MIN_SPEED
@@ -80,6 +81,7 @@ class Motor :
         self.getVoltage() 
         self.getTemperature()
         self.getLoad() 
+        
         
         self.showInfo()
         print("Motor n°"+ str(self._ID) + " correctly started.")
@@ -232,7 +234,7 @@ class Motor :
     @param isBlocking Should the movment be blocking ? (False by default)
     @returns true if moved correctly, else false
     """
-    def move(self, newPos : int, TTR : int, TTA = 0, isDegree = False, isBlocking = False, debug = False) -> bool :
+    def move(self, newPos : int, TTR = -1, isDegree = False) -> bool :
         #------Convert degree in relative postiion------
         if isDegree :
             if self._MaxPos == MAX_POS_NPID :
@@ -241,136 +243,154 @@ class Motor :
                 self._GoalPos = myFunctions.mapping(newPos, 0, 360, self._MinPos, self._MaxPos)
         else :
             self._GoalPos = newPos % self._MaxPos
-            
-        #TTA = 0
+        
+        TTA = 0.25 * TTR
         
         self.getPosition()  
-        if TTA > 0 :
-            V2 = round(abs(self._GoalPos - self._PresentPos) / ((TTR-TTA)*10)) #/ 10   #Constant speed to reach 
+        
+        nbStep      = 30                                    #Number of steps when accelerating
+
+        
+        if TTR == -1 : #Pour la commande via les oeufs
+            TTR = 2
+            TTA = 0.25
             
-            nbStep      = 20                                    #Number of steps when accelerating
+            V2 = round(abs(self._GoalPos - self._PresentPos) / ((TTR-TTA)*10))   #Constant speed to reach 
             stepSpeed   = round(V2 / nbStep)                    #Speed step value 
             stepTime    = TTA / nbStep                          #Time step value
-
+            
             print("**********************************************")
             print("GOAL POS - PRESENT POS = DELTA POS : \t", self._GoalPos," - ", self._PresentPos," = abs(", abs(self._GoalPos - self._PresentPos),")\n",
-                  "TTA : ", TTA, ", TTR :", TTR," V2 : ", V2,", STEP TIME : ", stepTime, ", STEP SPEED : ", stepSpeed)
+                "TTA : ", TTA, ", TTR :", TTR," V2 : ", V2,", STEP TIME : ", stepTime, ", STEP SPEED : ", stepSpeed)
             print("**********************************************")
 
-            ##Set initial speed
-            self._GoalSpeed = MIN_SPEED
-            
-            ##Write speed position
-            self.setSpeed() 
-
-            ##Write goal position
-            self.setGoalPosition() 
-
-
-            #----------Acceleration----------
-            print("--------------------------------\n",
-                  "----------Acceleration----------\n",
-                  "--------------------------------")
-            
-            start_time = time.time()
-            actualTime = start_time
-            
-            i = 1
-            print("~~~~~~~~~~Step n°", i, "~~~~~~~~~~" )
-            print("\tActualTime : ", actualTime)
-            print("\tGoalSpeed : ", self._GoalSpeed, "\n")
-            
-            while(i < nbStep + 1):
-                actualTime = time.time() - start_time
-                
-                if (actualTime >= (i * stepTime)):
-                    
-                    self._GoalSpeed += stepSpeed
-                    
-                    if self._GoalSpeed > self._MaxSpeed : self._GoalSpeed = self._MaxSpeed
-                    if self._GoalSpeed < self._MinSpeed : self._GoalSpeed = self._MinSpeed
-                
-                    i+=1
-                    print("~~~~~~~~~~Step n°", i, "~~~~~~~~~~" )
-                    print("\tActualTime : ", actualTime)
-                    print("\tGoalSpeed : ", self._GoalSpeed)
-                    self.setSpeed()
-                    print()
-                
-                    
-
-            #----------Croisiere----------
-            print("--------------------------------\n",
-                  "------------Croisière-----------\n",
-                  "--------------------------------\n")
-            print("\tActualTime : ", actualTime)
-            while((time.time()- start_time) <= ( (TTR - TTA))):
-                pass
-            
-            
-
-            #----------Decceleration----------
-            print("--------------------------------\n",
-                  "----------Decceleration---------\n",
-                  "--------------------------------")
-            i = 1
-            actualTime = time.time()
-            print("~~~~~~~~~~Step n°", i, "~~~~~~~~~~" )
-            print("\tActualTime : ", actualTime)
-            print("\tGoalSpeed : ", self._GoalSpeed, "\n")
-            
-            while(i < nbStep + 1):
-                actualTime = time.time() - start_time
-                
-                if (actualTime >= ((i * stepTime)+TTR-TTA)):
-
-                    self._GoalSpeed -= stepSpeed
-                    
-                    if self._GoalSpeed < 0 : self._GoalSpeed = self._MinSpeed
-                    if self._GoalSpeed < self._MinSpeed : self._GoalSpeed = self._MinSpeed
-
-                    i+=1
-                    
-                    print("~~~~~~~~~~Step n°", i, "~~~~~~~~~~" )
-                    print("\tActualTime : ", actualTime)
-                    print("\tGoalSpeed : ", self._GoalSpeed)
-                    self.setSpeed()
-                    print()
+        else :  
         
-        else :
-            
-            # Working : constant speed
-            #Calculate speed
-            self.getPosition()
-            self._GoalSpeed = round(abs(self._PresentPos - self._GoalPos) / (TTR*10))
-            
-            #Write speed position
-            self.setSpeed()
-            self.setGoalPosition() 
+            V2 = round(abs(self._GoalPos - self._PresentPos) / ((TTR-TTA)*10))   #Constant speed to reach 
+            self.AccelerationMovement(V2, TTR, TTA, nbStep)
         
         self.getPosition()
-        print("************************************\n",
-              "Erreur de position : ", abs(self._PresentPos - self._GoalPos),"\n",
-              "************************************\n",
-              )
-
+        
         """
-        if isBlocking :
-            while True :
-                self._PresentPos, self._ComResult, self._Error  = self._packetHandler.read2ByteTxRx(self._portHandler, self._ID, ADDR_PRESENT_POS)
-                self.verifComm(self._packetHandler, self._ComResult, self._Error, "")
-                				
-                if debug : print("[ID: "+ self._ID + "] GoalPos:"+ self._GoalPos+ " - PresPos: "+ self._PresentPos)
-                
-                if (self._PresentPos < self._MinPos) : self._PresentPos = self._MinPos
-                if (self._PresentPos > self._MaxPos) : self._PresentPos = self._MaxPos
-                
-                dif = self._GoalPos - self._PresentPos
-                
-                if abs(dif) <= self._Threshold : break
+        print("************************************\n",
+                "Erreur de position : ", abs(self._PresentPos - self._GoalPos),"\n",
+                "************************************\n",
+                )
+        """
+                    
+        return True      
+    
+    """
+    Acceleration
+    """  
+    def AccelerationMovement(self, V, TTR, TTA, nbStep):
+        stepSpeed   = round(V / nbStep)                    #Speed step value 
+        stepTime    = TTA / nbStep                          #Time step value
+        
+        """
+        print("**********************************************")
+        print("GOAL POS - PRESENT POS = DELTA POS : \t", self._GoalPos," - ", self._PresentPos," = abs(", abs(self._GoalPos - self._PresentPos),")\n",
+            "TTA : ", TTA, ", TTR :", TTR," V : ", V,", STEP TIME : ", stepTime, ", STEP SPEED : ", stepSpeed)
+        print("**********************************************")
         """
         
-        return True        
+        
+        ##Set initial speed
+        self._GoalSpeed = MIN_SPEED
+        
+        ##Write speed position
+        self.setSpeed() 
+
+        ##Write goal position
+        self.setGoalPosition() 
+
+        """
+        #----------Acceleration----------
+        print("--------------------------------\n",
+                "----------Acceleration----------\n",
+                "--------------------------------")
+        """
+        
+        start_time = time.time()
+        actualTime = start_time
+        
+        i = 1
+        
+        """
+        print("~~~~~~~~~~Step n°", i, "~~~~~~~~~~" )
+        print("\tActualTime : ", actualTime)
+        print("\tGoalSpeed : ", self._GoalSpeed, "\n")
+        """
+        
+        while(i < nbStep + 1):
+            actualTime = time.time() - start_time
+            
+            if (actualTime >= (i * stepTime)):
+                
+                self._GoalSpeed += stepSpeed
+                
+                if self._GoalSpeed > self._MaxSpeed : self._GoalSpeed = self._MaxSpeed
+                if self._GoalSpeed < self._MinSpeed : self._GoalSpeed = self._MinSpeed
+            
+                i+=1
+                """
+                print("~~~~~~~~~~Step n°", i, "~~~~~~~~~~" )
+                print("\tActualTime : ", actualTime)
+                print("\tGoalSpeed : ", self._GoalSpeed)
+                """
+                self.setSpeed()
+                #print()
+            
+                
+        """
+        #----------Croisiere----------
+        print("--------------------------------\n",
+                "------------Croisière-----------\n",
+                "--------------------------------\n")
+                
+        print("\tActualTime : ", actualTime)
+        """
+        while((time.time()- start_time) <= ( (TTR - TTA))):
+            pass
+        
+        
+
+        #----------Decceleration----------
+        """
+        print("--------------------------------\n",
+                "----------Decceleration---------\n",
+                "--------------------------------")
+        """
+        
+        i = 1
+        actualTime = time.time()
+        
+        """
+        print("~~~~~~~~~~Step n°", i, "~~~~~~~~~~" )
+        print("\tActualTime : ", actualTime)
+        print("\tGoalSpeed : ", self._GoalSpeed, "\n")
+        """
+        
+        while(i < nbStep + 1):
+            actualTime = time.time() - start_time
+            
+            if (actualTime >= ((i * stepTime)+TTR-TTA)):
+
+                self._GoalSpeed -= stepSpeed
+                
+                if self._GoalSpeed < 0 : self._GoalSpeed = self._MinSpeed
+                if self._GoalSpeed < self._MinSpeed : self._GoalSpeed = self._MinSpeed
+
+                i+=1
+                
+                """
+                print("~~~~~~~~~~Step n°", i, "~~~~~~~~~~" )
+                print("\tActualTime : ", actualTime)
+                print("\tGoalSpeed : ", self._GoalSpeed)
+                """
+                self.setSpeed()
+                #print()     
+        
 
     """
     Turn off motor led

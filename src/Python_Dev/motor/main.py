@@ -4,8 +4,8 @@ from myConstants import *
 from Motor import *
 from MotorPID import *
 import random as rand
-import time
-  
+import os
+
 # prints a random value from the list
 
 PORTNAME = "/dev/ttyACM0"
@@ -24,6 +24,24 @@ servo_elbow     = MotorPID("MX64T", 2, PORTNAME, BAUDRATE)
 servo_wristVer  = MotorPID("MX28T", 3, PORTNAME, BAUDRATE)
 servo_wristRot  = Motor("AX18A", 4, PORTNAME, BAUDRATE)
 servo_gripper   = Motor("AX18A", 5, PORTNAME, BAUDRATE)
+
+
+servo_base.setP(100)
+servo_base.setI(75)
+servo_base.setD(254)
+
+servo_shoulder.setP(200)
+servo_shoulder.setI(254)
+servo_shoulder.setD(200)
+
+servo_elbow.setP(50)
+servo_elbow.setI(50)
+servo_elbow.setD(254)
+
+servo_wristVer.setP(200)
+servo_wristVer.setI(100)
+servo_wristVer.setD(200)
+
 
 tabServo = [servo_base, servo_shoulder, servo_elbow, servo_wristVer, servo_wristRot, servo_gripper]
 
@@ -48,16 +66,12 @@ while (1) :
         else:
             print("Quelle position donner ? (en °) ")
 
-            pos = int(input())
+            pos = float(input())
             
             print("Quel TTR ?")
-            TTR = int(input())
+            TTR = float(input())
             print("TTR : ", TTR)
             
-            print("Quel TTA ?")
-            TTA = int(input())
-            print("TTA : ", TTA)
-
             #tabServo[nbServo].setP(0)
             #tabServo[nbServo].setI(0)
             #tabServo[nbServo].setD(0)
@@ -65,7 +79,30 @@ while (1) :
             if pos < 0 or pos > 360 :
                 pass
             else:
-                tabServo[nbServo].move(pos, TTR = TTR, TTA=TTA, isDegree=True)
+                
+                # Create a child process
+                # using os.fork() method 
+                pid = os.fork()
+
+                
+                # a Non-zero process id (pid)
+                # indicates the parent process 
+                if pid :
+                    # Wait for the completion of
+                    # child process using
+                    # os.wait() method    
+                    # Wait for the completion of
+                    # child process using
+                    # os.wait() method    
+                    status = os.wait()
+                    print("\nIn parent process-")
+                    print("Terminated child's process id:", status[0])
+                    print("Signal number that killed the child process:", status[1])
+                
+                else :
+                    tabServo[nbServo].move(pos, TTR = TTR, isDegree=True)
+
+                    
                 tabServo[nbServo].getPosition()
         
 
