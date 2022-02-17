@@ -14,21 +14,21 @@ class OscCallbacks:
         # TODO Insérer ici la fonction à appeler pour exécuter la commande
     
     def move_base(self, str, args, *stArgs):
-        _targetAngle = args
-        _timeToReach = stArgs[0]
-        _accelTime = stArgs[1]
+        targetAngle = args
+        timeToReach = stArgs[0]
+        accelTime = stArgs[1]
 
         if not(self._eggActivated) :
-            Base.move(_targetAngle, _timeToReach, _accelTime, True, False, False)
-            print("MoveBase -> targetAngle :", _targetAngle, " timeToReach :", _timeToReach, "accelTime", _accelTime)
+            Base.move(targetAngle, timeToReach, accelTime, True, False, False)
+            print("MoveBase -> targetAngle :", targetAngle, " timeToReach :", timeToReach, "accelTime", accelTime)
     
     def move_shoulder(self, str, args, *stArgs):
-        _targetAngle = args
-        _timeToReach = stArgs[0]
-        _accelTime = stArgs[1]
+        targetAngle = args
+        timeToReach = stArgs[0]
+        accelTime = stArgs[1]
         if not(self._eggActivated) :
-            Shoulder.move(_targetAngle, _timeToReach, _accelTime, True, False, False)
-            print("MoveShoulder -> targetAngle :", _targetAngle, " timeToReach :", _timeToReach, "accelTime", _accelTime)
+            Shoulder.move(targetAngle, timeToReach, accelTime, True, False, False)
+            print("MoveShoulder -> targetAngle :", targetAngle, " timeToReach :", timeToReach, "accelTime", accelTime)
 
 
     def move_elbow(self, str, args, *stArgs):

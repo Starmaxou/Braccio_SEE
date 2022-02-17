@@ -27,12 +27,12 @@ if __name__ == "__main__":
         if targetAngle > 360:
             targetAngle = 0
         client.send_message("/EggControl", [activation])
-        client.send_message("/Move/Base",[targetAngle,timeToReach,accelTime])
-        client.send_message("/Move/Shoulder",[targetAngle,timeToReach,accelTime])
-        client.send_message("/Move/Elbow",[targetAngle,timeToReach,accelTime])
-        client.send_message("/Move/WristVer",[targetAngle,timeToReach,accelTime])
-        client.send_message("/Move/WristRot",[targetAngle,timeToReach,accelTime])
-        client.send_message("/Move/Gripper",[targetAngle,timeToReach,accelTime])
+        client.send_message("/Move/Base",[targetAngle,timeToReach])
+        client.send_message("/Move/Shoulder",[targetAngle,timeToReach])
+        client.send_message("/Move/Elbow",[targetAngle,timeToReach])
+        client.send_message("/Move/WristVer",[targetAngle,timeToReach])
+        client.send_message("/Move/WristRot",[targetAngle,timeToReach])
+        client.send_message("/Move/Gripper",[targetAngle,timeToReach])
         activation = not activation
         client.send_message("/EggControl", [activation])
         time.sleep(1)
