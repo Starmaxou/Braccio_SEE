@@ -19,7 +19,7 @@ MAX_POS_PID     = 4092  #relative position, real max = 4095 ~ 360°
 
 #--------------- @12V ---------------
 #To calculate max speed value, use motor No Load speed (NLS) parameter : MAX_MOTOR_SPEED = NLS * 1023 / MAX_MOTORSERIE_SPEED (further information on https://emanual.robotis.com/docs/en/dxl/mx/mx-106/#moving-speed)
-MIN_SPEED       = 1     
+MIN_SPEED       = 5     
 MAX_SPEED_106T  = 394   #relative speed ~ 45 rev/min, each unit equals 0.114 rpm 
 MAX_SPEED_64T   = 552   #relative speed ~ 63 rev/min, each unit equals 0.114 rpm
 MAX_SPEED_28T   = 482   #relative speed ~ 55 rev/min, each unit equals 0.114 rpm  
